@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Los Vistos — Certificación de Miembros</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --wa-bg: #111B21;
+    --wa-panel: #1F2C34;
+    --wa-bubble-in: #202C33;
+    --wa-bubble-out: #005C4B;
+    --wa-green: #25D366;
+    --wa-green-light: #4ADE80;
+    --wa-teal: #00A884;
+    --wa-text: #E9EDEF;
+    --wa-subtext: #8696A0;
+    --wa-divider: #222E35;
+    --gold: #D4AF37;
+    --gold-light: #F0D070;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--wa-bg);
+    color: var(--wa-text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--wa-panel);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--wa-divider);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .group-avatar {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--wa-green), var(--wa-teal));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .group-info h1 {
+    font-size: 16px; font-weight: 600; color: var(--wa-text);
+    letter-spacing: 0.01em;
+  }
+  .group-info p {
+    font-size: 12px; color: var(--wa-subtext); margin-top: 1px;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .app {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
+  }
+
+  /* ── STEP TRACKER ── */
+  .tracker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    padding: 24px 0 8px;
+    position: relative;
+  }
+
+  .step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--wa-bubble-in);
+    border: 2px solid var(--wa-divider);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    color: var(--wa-subtext);
+    transition: all 0.4s ease;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+  }
+  .step-dot.active {
+    border-color: var(--wa-green);
+    color: var(--wa-green);
+    background: rgba(37,211,102,0.1);
+  }
+  .step-dot.done {
+    border-color: var(--wa-green);
+    background: var(--wa-green);
+    color: #111;
+    font-size: 15px;
+  }
+
+  .step-line {
+    height: 2px;
+    width: 40px;
+    background: var(--wa-divider);
+    transition: background 0.4s ease;
+  }
+  .step-line.done { background: var(--wa-green); }
+
+  /* ── CHAT BUBBLES ── */
+  .chat-area {
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bubble-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .bubble-wrap.out { flex-direction: row-reverse; }
+
+  .avatar-sm {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--wa-teal);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .bubble {
+    max-width: 80%;
+    background: var(--wa-bubble-in);
+    border-radius: 8px 8px 8px 2px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+  }
+  .bubble.out {
+    background: var(--wa-bubble-out);
+    border-radius: 8px 8px 2px 8px;
+  }
+
+  .bubble-time {
+    font-size: 10px;
+    color: var(--wa-subtext);
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  .sender-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--wa-green);
+    margin-bottom: 4px;
+  }
+
+  /* ── DATE DIVIDER ── */
+  .date-pill {
+    text-align: center;
+    margin: 12px 0;
+    position: relative;
+  }
+  .date-pill span {
+    background: rgba(31,44,52,0.9);
+    color: var(--wa-subtext);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  /* ── CARDS / STEPS ── */
+  .step-card {
+    background: var(--wa-panel);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid var(--wa-divider);
+    display: none;
+  }
+  .step-card.visible { display: block; }
+  .step-card.slide-in {
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wa-green);
+    margin-bottom: 6px;
+  }
+
+  .step-card h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--wa-text);
+  }
+
+  .step-card p {
+    font-size: 14px;
+    color: var(--wa-subtext);
+    line-height: 1.55;
+  }
+
+  /* ── SELECT ── */
+  .select-wrap {
+    position: relative;
+    margin-top: 16px;
+  }
+  select {
+    width: 100%;
+    background: var(--wa-bubble-in);
+    color: var(--wa-text);
+    border: 1px solid var(--wa-divider);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus { border-color: var(--wa-green); }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--wa-subtext); pointer-events: none;
+  }
+
+  /* ── PLAN INFO (step 2) ── */
+  .plan-box {
+    background: var(--wa-bubble-in);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    border-left: 3px solid var(--wa-green);
+    display: none;
+  }
+  .plan-box.visible { display: block; }
+  .plan-event { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .plan-detail { font-size: 13px; color: var(--wa-subtext); }
+
+  /* ── VOTE BUTTONS ── */
+  .vote-row {
+    display: flex; gap: 12px; margin-top: 16px;
+  }
+  .vote-btn {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid var(--wa-divider);
+    border-radius: 10px;
+    background: var(--wa-bubble-in);
+    color: var(--wa-text);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .vote-btn:hover { border-color: var(--wa-green); transform: translateY(-2px); }
+  .vote-btn.selected-yes { border-color: var(--wa-green); background: rgba(37,211,102,0.12); color: var(--wa-green); }
+  .vote-btn.selected-no { border-color: #f44336; background: rgba(244,67,54,0.1); color: #ef9a9a; }
+
+  /* ── CONFIRM BUTTON ── */
+  .confirm-btn {
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+    background: var(--wa-green);
+    color: #111;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    display: none;
+  }
+  .confirm-btn.visible { display: block; }
+  .confirm-btn:hover { background: var(--wa-green-light); transform: translateY(-1px); }
+  .confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── CERTIFICATE ── */
+  #cert-section {
+    display: none;
+    margin-top: 24px;
+  }
+  #cert-section.visible { display: block; animation: slideUp 0.5s ease; }
+
+  .cert-outer {
+    background: linear-gradient(145deg, #0f1a14, #1a2d1e);
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 4px;
+    box-shadow: 0 0 40px rgba(212,175,55,0.2), 0 8px 32px rgba(0,0,0,0.6);
+  }
+
+  .cert-inner {
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 12px;
+    padding: 36px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cert-inner::before {
+    content: '👀';
+    position: absolute;
+    font-size: 120px;
+    opacity: 0.04;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .cert-badge {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+
+  .cert-org {
+    font-family: 'IM Fell English', serif;
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.8;
+    margin-bottom: 20px;
+  }
+
+  .cert-title {
+    font-family: 'IM Fell English', serif;
+    font-size: 28px;
+    color: var(--gold-light);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .cert-subtitle {
+    font-size: 12px;
+    color: var(--wa-subtext);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .cert-divider {
+    width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 24px;
+  }
+
+  .cert-this-certifies {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--wa-subtext);
+    margin-bottom: 12px;
+  }
+
+  .cert-name {
+    font-family: 'IM Fell English', serif;
+    font-size: 34px;
+    color: #fff;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 12px rgba(212,175,55,0.3);
+  }
+
+  .cert-body {
+    font-size: 13px;
+    color: var(--wa-subtext);
+    line-height: 1.7;
+    max-width: 380px;
+    margin: 0 auto 24px;
+  }
+
+  .cert-body strong { color: var(--wa-text); }
+
+  .cert-divider2 {
+    width: 40%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent);
+    margin: 0 auto 20px;
+  }
+
+  .cert-footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    margin-bottom: 4px;
+  }
+
+  .cert-sign {
+    text-align: center;
+  }
+  .cert-sign-line {
+    width: 120px; height: 1px;
+    background: rgba(212,175,55,0.4);
+    margin: 0 auto 6px;
+  }
+  .cert-sign-label {
+    font-size: 10px;
+    color: var(--wa-subtext);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cert-sign-name {
+    font-size: 11px;
+    color: var(--gold);
+    margin-top: 2px;
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+  }
+
+  .cert-seal {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: rgba(212,175,55,0.07);
+    box-shadow: 0 0 16px rgba(212,175,55,0.25);
+  }
+
+  .cert-id {
+    font-size: 10px;
+    color: rgba(134,150,160,0.5);
+    margin-top: 16px;
+    font-family: monospace;
+  }
+
+  /* ── SHARE BUTTON ── */
+  .share-row {
+    display: flex; gap: 10px; margin-top: 16px;
+  }
+  .share-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.2s;
+  }
+  .share-btn.wa {
+    background: var(--wa-green);
+    color: #111;
+  }
+  .share-btn.wa:hover { background: var(--wa-green-light); }
+  .share-btn.copy {
+    background: var(--wa-bubble-in);
+    color: var(--wa-text);
+    border: 1px solid var(--wa-divider);
+  }
+  .share-btn.copy:hover { border-color: var(--wa-green); }
+
+  /* ── SUCCESS CHAT ── */
+  .success-msg {
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+  .success-msg.visible { display: flex; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .app { padding: 0 10px 40px; }
+    .cert-name { font-size: 26px; }
+    .cert-title { font-size: 22px; }
+    .cert-inner { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="group-avatar">👀</div>
+  <div class="group-info">
+    <h1>Los Vistos</h1>
+    <p>Certificación Oficial de Miembros</p>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- TRACKER -->
+  <div class="tracker">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot" id="dot-2">2</div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot" id="dot-3">3</div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step-dot" id="dot-4">🎓</div>
+  </div>
+
+  <div class="chat-area">
+    <div class="date-pill"><span>HOY</span></div>
+
+    <!-- Bienvenida -->
+    <div class="bubble-wrap">
+      <div class="avatar-sm">👀</div>
+      <div class="bubble">
+        <div class="sender-name">Los Vistos — Sistema</div>
+        ¡Bienvenido al curso de certificación! Para ser miembro oficial del grupo debés completar el <strong>Curso de Encuestas</strong>. Son 3 pasos cortitos. Empezamos 💪
+        <div class="bubble-time" id="time-now"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PASO 1: SELECCIONAR NOMBRE ── -->
+  <div class="step-card visible slide-in" id="step1">
+    <div class="step-label">Paso 1 de 3</div>
+    <h2>¿Quién sos?</h2>
+    <p>Seleccioná tu nombre de la lista de miembros del grupo.</p>
+
+    <div class="select-wrap" style="margin-top:16px">
+      <select id="member-select" onchange="onNameSelect()">
+        <option value="">— Seleccioná tu nombre —</option>
+        <option>Alejandro De Conti</option>
+        <option>Mariano Di Muni</option>
+        <option>Agustin Alonso</option>
+        <option>Matias Chiesa</option>
+        <option>Matias Martinez</option>
+        <option>Matias De Maro</option>
+        <option>Franco Melani</option>
+        <option>Santiago Carnival</option>
+        <option>Federico Pascual Russo</option>
+        <option>Francisco Peysere</option>
+        <option>Nicolas Boyano</option>
+        <option>Nicolas Segovia</option>
+        <option>Tomas Fortuny</option>
+        <option>Guido Conte</option>
+      </select>
+    </div>
+
+    <button class="confirm-btn" id="btn1" onclick="goStep2()">Ese soy yo ✓</button>
+  </div>
+
+  <!-- ── PASO 2: PLAN ── -->
+  <div class="step-card" id="step2">
+    <div class="step-label">Paso 2 de 3</div>
+    <h2>Informate del plan 📋</h2>
+    <p>Antes de votar, andá al grupo de WhatsApp y fijate cuál es el plan propuesto: qué es, dónde y a qué hora.</p>
+
+    <div class="plan-box visible" style="display:block; margin-top:16px;">
+      <div class="plan-event">📲 Revisá el grupo de WhatsApp</div>
+      <div class="plan-detail" style="margin-top:6px">Buscá el último mensaje con el plan y leelo bien antes de continuar.</div>
+    </div>
+
+    <p style="margin-top:16px; font-size:13px; color: var(--wa-subtext)">
+      📌 Una vez que te informaste del plan, confirmá acá para seguir al siguiente paso.
+    </p>
+
+    <button class="confirm-btn visible" onclick="goStep3()">Me informé del plan ✓</button>
+  </div>
+
+  <!-- ── PASO 3: VOTO ── -->
+  <div class="step-card" id="step3">
+    <div class="step-label">Paso 3 de 3</div>
+    <h2>¿Vas o no vas? 🗳️</h2>
+    <p>Ahora sí: evaluá si podés ir al plan y emitís tu voto. Después andá al grupo <strong>Encuestas Los Vistos</strong> y confirmalo ahí también.</p>
+
+    <div class="vote-row">
+      <button class="vote-btn" id="vote-yes" onclick="selectVote('yes')">
+        ✅ Estoy
+      </button>
+      <button class="vote-btn" id="vote-no" onclick="selectVote('no')">
+        ❌ No estoy
+      </button>
+    </div>
+
+    <p style="margin-top:14px; font-size:12px; color:var(--wa-subtext)">
+      ⚠️ Recordá votar también en el grupo de Encuestas de WhatsApp para que el voto sea oficial.
+    </p>
+
+    <button class="confirm-btn" id="btn3" onclick="generateCert()">Voté en el grupo ✓</button>
+  </div>
+
+  <!-- ── CERTIFICADO ── -->
+  <div id="cert-section">
+    <div class="chat-area" style="margin-bottom:8px">
+      <div class="bubble-wrap success-msg visible" id="congrats-bubble">
+        <div class="avatar-sm">👀</div>
+        <div class="bubble">
+          <div class="sender-name">Los Vistos — Sistema</div>
+          🎉 <strong id="cert-first-name">Nombre</strong> completó el Curso de Encuestas. ¡Certificado emitido!
+          <div class="bubble-time" id="cert-time"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CERTIFICADO -->
+    <div class="cert-outer" id="certificate">
+      <div class="cert-inner">
+        <div class="cert-badge">👀</div>
+        <div class="cert-org">Los Vistos — Grupo Oficial</div>
+        <div class="cert-title">Certificado de Aptitud<br>Participativa</div>
+        <div class="cert-subtitle">Curso de Encuestas — Nivel Básico</div>
+        <div class="cert-divider"></div>
+        <div class="cert-this-certifies">Este certificado acredita que</div>
+        <div class="cert-name" id="cert-name-display">Nombre Apellido</div>
+        <div class="cert-body">
+          ha completado satisfactoriamente el <strong>Curso de Encuestas de Los Vistos</strong>,
+          demostrando capacidad para informarse del plan propuesto, evaluar su disponibilidad
+          y emitir su voto correspondiente en el grupo oficial.
+        </div>
+        <div class="cert-divider2"></div>
+        <div class="cert-footer">
+          <div class="cert-sign">
+            <div class="cert-sign-line"></div>
+            <div class="cert-sign-label">Fundadores</div>
+            <div class="cert-sign-name">Los Vistos</div>
+          </div>
+          <div class="cert-seal">✔️</div>
+          <div class="cert-sign">
+            <div class="cert-sign-line"></div>
+            <div class="cert-sign-label">Encuestas</div>
+            <div class="cert-sign-name">Grupo Oficial</div>
+          </div>
+        </div>
+        <div class="cert-id" id="cert-id">ID: —</div>
+      </div>
+    </div>
+
+    <div class="share-row">
+      <button class="share-btn wa" onclick="shareWA()">
+        📲 Compartir al grupo
+      </button>
+      <button class="share-btn copy" onclick="copyCert()">
+        📋 Copiar texto
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Hora actual ──
+  const now = new Date();
+  const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('time-now').textContent = hhmm;
+
+  // ── State ──
+  let selectedName = '';
+  let selectedVote = '';
+
+  function onNameSelect() {
+    selectedName = document.getElementById('member-select').value;
+    const btn = document.getElementById('btn1');
+    btn.style.display = selectedName ? 'block' : 'none';
+    btn.classList.toggle('visible', !!selectedName);
+  }
+
+  function updateDots(active) {
+    for (let i = 1; i <= 4; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.className = 'step-dot';
+      if (i < active) dot.classList.add('done');
+      else if (i === active) dot.classList.add('active');
+    }
+    for (let i = 1; i <= 3; i++) {
+      const line = document.getElementById('line-' + i);
+      line.className = 'step-line' + (i < active ? ' done' : '');
+    }
+  }
+
+  function goStep2() {
+    document.getElementById('step1').classList.remove('slide-in');
+    document.getElementById('step1').style.opacity = '0.4';
+    document.getElementById('step1').style.pointerEvents = 'none';
+    
+    const s2 = document.getElementById('step2');
+    s2.classList.add('visible', 'slide-in');
+    updateDots(2);
+    s2.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function goStep3() {
+    document.getElementById('step2').style.opacity = '0.4';
+    document.getElementById('step2').style.pointerEvents = 'none';
+    
+    const s3 = document.getElementById('step3');
+    s3.classList.add('visible', 'slide-in');
+    updateDots(3);
+    s3.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function selectVote(v) {
+    selectedVote = v;
+    document.getElementById('vote-yes').className = 'vote-btn' + (v === 'yes' ? ' selected-yes' : '');
+    document.getElementById('vote-no').className = 'vote-btn' + (v === 'no' ? ' selected-no' : '');
+    const btn3 = document.getElementById('btn3');
+    btn3.classList.add('visible');
+    btn3.textContent = v === 'yes' ? '✅ Voté ESTOY en el grupo ✓' : '❌ Voté NO ESTOY en el grupo ✓';
+  }
+
+  function generateCert() {
+    if (!selectedVote) return;
+
+    document.getElementById('step3').style.opacity = '0.4';
+    document.getElementById('step3').style.pointerEvents = 'none';
+    updateDots(4);
+
+    const firstName = selectedName.split(' ')[0];
+    document.getElementById('cert-first-name').textContent = firstName;
+    document.getElementById('cert-name-display').textContent = selectedName;
+    document.getElementById('cert-time').textContent = hhmm;
+
+    const certId = 'LV-' + Date.now().toString(36).toUpperCase().slice(-6);
+    document.getElementById('cert-id').textContent = 'ID: ' + certId + ' · ' + new Date().toLocaleDateString('es-AR');
+
+    const certSection = document.getElementById('cert-section');
+    certSection.classList.add('visible');
+    certSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function getCertText() {
+    const certId = document.getElementById('cert-id').textContent;
+    return `👀 *LOS VISTOS — CERTIFICADO OFICIAL*\n\n` +
+      `✅ *${selectedName}* completó el Curso de Encuestas.\n\n` +
+      `_Certificado de Aptitud Participativa emitido por el sistema oficial de Los Vistos._\n` +
+      `${certId}`;
+  }
+
+  function shareWA() {
+    const text = encodeURIComponent(getCertText());
+    window.open('https://wa.me/?text=' + text, '_blank');
+  }
+
+  function copyCert() {
+    navigator.clipboard.writeText(getCertText()).then(() => {
+      const btn = document.querySelector('.share-btn.copy');
+      btn.textContent = '✓ Copiado!';
+      setTimeout(() => btn.innerHTML = '📋 Copiar texto', 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
